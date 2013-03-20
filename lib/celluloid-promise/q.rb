@@ -331,7 +331,7 @@ module Celluloid
 	# This is the primary interface for creating promises
 	# The coordinator selects the reactor for the current promise chain
 	#
-	Actor[:Q] = Promise::Coordinator.new
+	Promise::Coordinator.supervise_as :Q
 	module Q
 		def self.defer
 			Actor[:Q].defer

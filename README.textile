@@ -1,0 +1,59 @@
+h1. Celluloid Promise
+
+!https://secure.travis-ci.org/cotag/celluloid-promise.png!
+
+A promise / deferred implementation for Celluloid inspired by "AngularJS":http://docs.angularjs.org/api/ng.$q / "Kris Kowal's Q.":https://github.com/kriskowal/q
+
+From the perspective of dealing with error handling, deferred and promise apis are to asynchronous programing what try, catch and throw keywords are to synchronous programming.
+
+<pre><code class="ruby">
+require 'rubygems'
+require 'celluloid-promise'
+
+def asyncGreet(name)
+	deferred = Celluloid::Q.defer
+	
+	Thread.new do
+		sleep 10
+		deferred.resolve("Hello #{name}")
+	end
+	
+	deferred.promise
+end
+
+
+asyncGreet('Robin Hood').then(proc { |greeting|
+	p "Success: #{greeting}"
+}, proc { |reason|
+	p "Failed: #{reason}"
+})
+
+asyncGreet('The Dude').then do |greeting|
+	p "Jeff '#{greeting}' Lebowski"
+end
+
+
+</code></pre>
+
+
+h2. Start using it now
+
+# Read the "Documentation":http://rubydoc.info/gems/celluloid-promise/Celluloid/Promise
+# Then @gem install celluloid-promise@
+
+
+h2. Use case
+
+Celluloid provides a toolkit for building concurrent applications however coordinating complex chains of concurrent events can be difficult.
+Celluloid-Promise provides the following:
+
+* allows you to track a mash up of events across Actors
+* guarantees serial execution of callbacks
+* callback chains are spread across multiple threads
+** So multiple promise chains can be executed concurrently
+
+Of course passing blocks around is a fairly "dangerous exercise":https://github.com/celluloid/celluloid/wiki/Blocks#proposal-for-fixing-blocks, so do the following and you'll be safe
+
+* use Celluloid-Promise for flow control
+* resolve and reject promises with locally scoped variables
+* call Actor methods to change state or class variables

@@ -44,7 +44,7 @@ module Celluloid
 			# @param [Proc, Proc, &blk] callbacks success, error, success_block
 			# @return [Promise] Returns an unresolved promise for chaining
 			def then(callback = nil, errback = nil, &blk)
-				result = Q.defer
+				result = ::Celluloid::Actor[:Q].defer(@reactor)
 				
 				callback ||= blk
 				
@@ -118,7 +118,7 @@ module Celluloid
 			end
 			
 			def then(callback = nil, errback = nil, &blk)
-				result = Q.defer
+				result = ::Celluloid::Actor[:Q].defer(@reactor)
 				
 				callback ||= blk
 				
@@ -223,8 +223,8 @@ module Celluloid
 			# Creates a Deferred object which represents a task which will finish in the future.
 			#
 			# @return [Deferred] Returns a new instance of Deferred
-			def defer
-				return Deferred.new(next_reactor)
+			def defer(reactor = nil)
+				return Deferred.new(next_reactor(reactor))
 			end
 			
 
@@ -316,13 +316,13 @@ module Celluloid
 			
 			#
 			# Promises are placed on reactor threads in a round robin
-			# I would have used pool however Celluloid::IO allows us to run
-			# multiple concurrent promise chains on each reactor, pool can't.
+			# I would have used pool however pool blocks to completion and doesn't
+			# allows us to run multiple concurrent promise chains on each reactor.
 			#
-			def next_reactor
+			def next_reactor(current = nil)
 				@current = @current >= (@reactors.length - 1) ? 0 : @current + 1
 				selected = @reactors[@current]
-				selected != Celluloid::Actor.current ? selected : next_reactor
+				selected != current ? selected : next_reactor(current)
 			end
 		end
 	end
@@ -334,15 +334,15 @@ module Celluloid
 	Promise::Coordinator.supervise_as :Q
 	module Q
 		def self.defer
-			Actor[:Q].defer
+			::Celluloid::Actor[:Q].defer
 		end
 		
 		def self.reject(reason = nil)
-			Actor[:Q].reject(reason)
+			::Celluloid::Actor[:Q].reject(reason)
 		end
 
 		def self.all(*promises)
-			Actor[:Q].all(*promises)
+			::Celluloid::Actor[:Q].all(*promises)
 		end
 	end
 end

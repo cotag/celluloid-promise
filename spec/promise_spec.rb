@@ -368,19 +368,19 @@ describe Celluloid::Q do
 				@mutex.synchronize {
 					@promise.then(proc {|result|
 						@log << result
-						:alt1
+						:alt
 					}, @default_fail)
 					@promise.then(proc {|result|
 						@log << result
-						'ERROR'
+						nil
 					}, @default_fail)
 					@promise.then(proc {|result|
 						@log << result
-						EM::Q.reject('some reason')
+						Celluloid::Q.reject('some reason')
 					}, @default_fail)
 					@promise.then(proc {|result|
 						@log << result
-						:alt2
+						raise 'some error'
 					}, @default_fail)
 					@promise.then(proc {
 						@finish.call
@@ -398,19 +398,19 @@ describe Celluloid::Q do
 				@mutex.synchronize {
 					@promise.then(@default_fail, proc {|result|
 						@log << result
-						:alt1
+						:alt
 					})
 					@promise.then(@default_fail, proc {|result|
 						@log << result
-						'ERROR'
+						nil
 					})
 					@promise.then(@default_fail, proc {|result|
 						@log << result
-						EM::Q.reject('some reason')
+						Celluloid::Q.reject('some reason')
 					})
 					@promise.then(@default_fail, proc {|result|
 						@log << result
-						:alt2
+						raise 'some error'
 					})
 					@promise.then(@default_fail, proc {|result|
 						@finish.call
@@ -506,11 +506,9 @@ describe Celluloid::Q do
 					@deferred.resolve()
 					@resource.wait(@mutex)
 					
-					
+					actor.terminate
 					::Celluloid::Actor.kill(actor)
 				}
-				
-				::Celluloid::Actor.kill(::Celluloid::Actor[:Q])	# As this is the last test, lets kill the threads
 			end
 			
 		end

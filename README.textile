@@ -56,4 +56,4 @@ Of course passing blocks around is a fairly "dangerous exercise":https://github.
 
 * use Celluloid-Promise for flow control
 * resolve and reject promises with locally scoped variables
-* call Actor methods to change state or class variables
+* call Actor methods to change state or instance variables

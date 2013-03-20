@@ -17,10 +17,9 @@ describe Celluloid::Q do
 		@promise = @deferred.promise
 		@log = []
 		@finish = proc {
-			while(@mutex.locked?); end
-			@mutex.synchronize {
-				@resource.signal
-			}
+			while(!@mutex.try_lock); end
+			@resource.signal
+			@mutex.unlock
 		}
 		@default_fail = proc { |reason|
 			fail(reason)
@@ -127,7 +126,7 @@ describe Celluloid::Q do
 			it "can modify the result of a promise before returning" do
 				@mutex.synchronize {
 					proc { |name|
-						@defer.async.task {
+						@defer.async.perform {
 							@deferred.resolve("Hello #{name}")
 						}
 						@promise.then(proc {|result|
@@ -262,9 +261,9 @@ describe Celluloid::Q do
 						@finish.call
 					}, @default_fail)
 					
-					@defer.async.task { @deferred.resolve(:foo) }
-					@defer.async.task { deferred2.resolve(:baz) }
-					@defer.async.task { deferred1.resolve(:bar) }
+					@defer.async.perform { @deferred.resolve(:foo) }
+					@defer.async.perform { deferred2.resolve(:baz) }
+					@defer.async.perform { deferred1.resolve(:bar) }
 
 					@resource.wait(@mutex)
 				}
@@ -281,8 +280,8 @@ describe Celluloid::Q do
 						@finish.call
 					})
 					
-					@defer.async.task { @deferred.resolve(:foo) }
-					@defer.async.task { deferred2.reject(:baz) }
+					@defer.async.perform { @deferred.resolve(:foo) }
+					@defer.async.perform { deferred2.reject(:baz) }
 
 					@resource.wait(@mutex)
 				}
@@ -470,8 +469,8 @@ describe Celluloid::Q do
 			class BlockingActor
 				include ::Celluloid
 				
-				def wait
-					sleep (10..20).to_a.sample
+				def delayed_response
+					sleep (5..10).to_a.sample
 				end
 			end
 			
@@ -486,7 +485,7 @@ describe Celluloid::Q do
 					deferred_store = []
 					
 					args = [proc {|val|
-						actor.wait
+						actor.delayed_response
 						count.update {|v| v + 1}
 					}, @default_fail]
 					
@@ -506,7 +505,12 @@ describe Celluloid::Q do
 					
 					@deferred.resolve()
 					@resource.wait(@mutex)
+					
+					
+					::Celluloid::Actor.kill(actor)
 				}
+				
+				::Celluloid::Actor.kill(::Celluloid::Actor[:Q])	# As this is the last test, lets kill the threads
 			end
 			
 		end

@@ -127,7 +127,7 @@ describe Celluloid::Q do
 			it "can modify the result of a promise before returning" do
 				@mutex.synchronize {
 					proc { |name|
-						@defer.task! {
+						@defer.async.task {
 							@deferred.resolve("Hello #{name}")
 						}
 						@promise.then(proc {|result|
@@ -262,9 +262,9 @@ describe Celluloid::Q do
 						@finish.call
 					}, @default_fail)
 					
-					@defer.task! { @deferred.resolve(:foo) }
-					@defer.task! { deferred2.resolve(:baz) }
-					@defer.task! { deferred1.resolve(:bar) }
+					@defer.async.task { @deferred.resolve(:foo) }
+					@defer.async.task { deferred2.resolve(:baz) }
+					@defer.async.task { deferred1.resolve(:bar) }
 
 					@resource.wait(@mutex)
 				}
@@ -281,8 +281,8 @@ describe Celluloid::Q do
 						@finish.call
 					})
 					
-					@defer.task! { @deferred.resolve(:foo) }
-					@defer.task! { deferred2.reject(:baz) }
+					@defer.async.task { @deferred.resolve(:foo) }
+					@defer.async.task { deferred2.reject(:baz) }
 
 					@resource.wait(@mutex)
 				}

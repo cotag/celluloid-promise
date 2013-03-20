@@ -78,7 +78,7 @@ module Celluloid
 				# Schedule as we are touching shared state
 				#	Everything else is locally scoped
 				#
-				@reactor.task! do
+				@reactor.async.task do
 					pending_array = pending
 					
 					if pending_array.nil?
@@ -122,7 +122,7 @@ module Celluloid
 				
 				callback ||= blk
 				
-				@reactor.task! do
+				@reactor.async.task do
 					if @error
 						if errback.nil?
 							result.resolve(ResolvedPromise.new(@reactor, @response, true))
@@ -164,7 +164,7 @@ module Celluloid
 			#
 			# @param [Object] val constant, message or an object representing the result.
 			def resolve(val = nil)
-				@reactor.task! do
+				@reactor.async.task do
 					if not @pending.nil?
 						callbacks = @pending
 						@pending = nil
